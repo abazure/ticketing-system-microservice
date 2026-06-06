@@ -1,16 +1,16 @@
-package dev.abazure.inventoryservice.dto;
+package dev.abazure.bookingservice.client.inventory.dto;
 
-import dev.abazure.inventoryservice.entity.Venue;
 import lombok.Builder;
 
 import java.math.BigInteger;
 
 @Builder
-public record EventInventoryResponse(
+public record InventoryEventResponse(
         Long eventId,
         String event,
         Long capacity,
-        Venue venue,
+        VenueResponse venue,
         BigInteger ticketPrice
+
 ) {
 }
