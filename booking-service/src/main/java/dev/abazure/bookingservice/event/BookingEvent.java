@@ -1,14 +1,14 @@
-package dev.abazure.bookingservice.dto;
+package dev.abazure.bookingservice.event;
 
 import lombok.Builder;
 
 import java.math.BigInteger;
 
 @Builder
-public record BookingResponse(
+public record BookingEvent(
         Long userId,
         Long eventId,
-        Long totalCount,
+        Long ticketCount,
         BigInteger totalPrice
 ) {
 }
