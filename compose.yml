@@ -17,8 +17,6 @@ services:
     build: ./inventory-service
     env_file:
       - .env
-    # ports:
-    #   - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -29,8 +27,6 @@ services:
     build: ./booking-service
     env_file:
       - .env
-    # ports:
-    #   - "8081:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -41,8 +37,6 @@ services:
     build: ./order-service
     env_file:
       - .env
-    # ports:
-    #   - "8082:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -60,6 +54,7 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+
   kafka:
     image: docker.io/apache/kafka:latest
     environment:
@@ -73,26 +68,19 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_CLUSTER_ID: ticketing-service
     healthcheck:
-      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      test:
+        [
+          "CMD",
+          "/opt/kafka/bin/kafka-topics.sh",
+          "--bootstrap-server",
+          "localhost:9092",
+          "--list",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
 
-  # kafka-ui:
-  #   image: docker.io/tchiotludo/akhq:latest
-  #   ports:
-  #     - "8070:8080"
-  #   environment:
-  #     AKHQ_CONFIGURATION: |
-  #       akhq:
-  #         connections:
-  #           local:
-  #             properties:
-  #               bootstrap.servers: "kafka:9092"
-  #   depends_on:
-  #     kafka:
-  #       condition: service_healthy
   kafka-ui:
     image: docker.io/redpandadata/console:v2.8.15
     ports:
@@ -102,5 +90,37 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+
+  keycloak-db:
+    image: docker.io/postgres:17
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    volumes:
+      - keycloak_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3
+    command: start-dev
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - "9090:8080"
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+
 volumes:
   postgres_data:
+  keycloak_data:

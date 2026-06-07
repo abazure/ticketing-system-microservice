@@ -14,3 +14,11 @@ spring:
               uri: http://booking-service:8080
               predicates:
                 - Path=/api/v1/booking/**
+  security:
+    oauth2:
+          resourceserver:
+            jwt:
+              issuer-uri: http://keycloak:8080/realms/ticketing
+keycloak:
+  auth:
+    jwk-set-uri: http://keycloak:8080/realms/ticketing/protocol/openid-connect/certs
