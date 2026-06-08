@@ -15,11 +15,17 @@ public class SecurityConfig {
     @Value("${keycloak.auth.jwk-set-uri}")
     private String jwkSetUri;
 
+
+    @Value("${security.excluded.urls}")
+    private String[] excludedUrls;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception{
         return httpSecurity.authorizeHttpRequests(
                 authorizationManager ->
-                        authorizationManager.anyRequest().authenticated())
+                        authorizationManager
+                                .requestMatchers(excludedUrls).permitAll()
+                                .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth ->
                         oauth.jwt(Customizer.withDefaults()))
                 .build();

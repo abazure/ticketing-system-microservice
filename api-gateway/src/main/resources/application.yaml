@@ -1,19 +1,6 @@
 spring:
   application:
     name: api-gateway
-  cloud:
-    gateway:
-      server:
-        webmvc:
-          routes:
-            - id: inventory-service
-              uri: http://inventory-service:8080
-              predicates:
-                - Path=/api/v1/inventories/**
-            - id: booking-service
-              uri: http://booking-service:8080
-              predicates:
-                - Path=/api/v1/booking/**
   security:
     oauth2:
           resourceserver:
@@ -22,3 +9,45 @@ spring:
 keycloak:
   auth:
     jwk-set-uri: http://keycloak:8080/realms/ticketing/protocol/openid-connect/certs
+
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+
+  endpoint:
+    health:
+      show-details: always
+
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers
+
+# Resilience4j config
+resilience4j:
+  circuitbreaker:
+    instances:
+      inventory-service-cb:
+        sliding-window-size: 10           # 10 request terakhir dipantau
+        failure-rate-threshold: 50        # kalau 50% gagal → OPEN
+        wait-duration-in-open-state: 10s  # tunggu 10s sebelum coba lagi
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+      booking-service-cb:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+
+  timelimiter:
+    instances:
+      inventory-service-cb:
+        timeout-duration: 3s  # request timeout
+      booking-service-cb:
+        timeout-duration: 3s
+
+security:
+  excluded:
+    urls: /swagger-ui.html,/swagger-ui/**,/docs/**,/v3/api-docs/**,/actuator/**,/fallback/**
